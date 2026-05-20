@@ -118,7 +118,7 @@ class DummyData {
           date: DateTime(2026, 5, 5),
           time: '10:00',
           notes: 'Potong model layer',
-          status: BookingStatus.done,
+          status: BookingStatus.selesai,
           totalPrice: 205000,
         ),
         Booking(
@@ -129,7 +129,7 @@ class DummyData {
           date: DateTime(2026, 5, 12),
           time: '13:00',
           notes: 'Warna coklat caramel',
-          status: BookingStatus.confirmed,
+          status: BookingStatus.dikonfirmasi,
           totalPrice: 250000,
         ),
         Booking(
@@ -139,8 +139,8 @@ class DummyData {
           services: [services[3]],
           date: DateTime(2026, 5, 25),
           time: '14:00',
-          notes: '',
-          status: BookingStatus.waiting,
+          notes: null,
+          status: BookingStatus.menunggu,
           totalPrice: 150000,
         ),
       ];

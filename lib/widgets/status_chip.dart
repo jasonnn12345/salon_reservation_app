@@ -8,32 +8,9 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    String label;
-
-    switch (status) {
-      case BookingStatus.waiting:
-        bgColor = Colors.orange.shade100;
-        textColor = Colors.orange.shade800;
-        label = 'Menunggu';
-        break;
-      case BookingStatus.confirmed:
-        bgColor = Colors.blue.shade100;
-        textColor = Colors.blue.shade800;
-        label = 'Dikonfirmasi';
-        break;
-      case BookingStatus.done:
-        bgColor = Colors.green.shade100;
-        textColor = Colors.green.shade800;
-        label = 'Selesai';
-        break;
-      case BookingStatus.cancelled:
-        bgColor = Colors.red.shade100;
-        textColor = Colors.red.shade800;
-        label = 'Dibatalkan';
-        break;
-    }
+    final baseColor = status.color;
+    final bgColor = Color.lerp(baseColor, Colors.white, 0.82)!;
+    final textColor = Color.lerp(baseColor, Colors.black, 0.3)!;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -42,7 +19,7 @@ class StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        label,
+        status.label,
         style: TextStyle(
           color: textColor,
           fontSize: 12,

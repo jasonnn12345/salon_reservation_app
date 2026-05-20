@@ -33,9 +33,9 @@ class DashboardPage extends StatelessWidget {
           ),
           body: BlocBuilder<BookingBloc, BookingState>(
             builder: (context, bookingState) {
-              final history = bookingState is HistoryLoaded ? bookingState.history : <Booking>[];
+              final history = bookingState.bookingHistory;
               final upcomingBooking = history
-                  .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.waiting)
+                  .where((b) => b.status == BookingStatus.dikonfirmasi || b.status == BookingStatus.menunggu)
                   .toList();
 
               return SingleChildScrollView(

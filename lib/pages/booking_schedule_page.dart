@@ -29,7 +29,7 @@ class _BookingSchedulePageState extends State<BookingSchedulePage> {
     super.initState();
     _selectedStylist = widget.preSelectedStylist;
     if (_selectedStylist != null) {
-      context.read<BookingBloc>().add(SelectStylistBooking(stylist: _selectedStylist!));
+      context.read<BookingBloc>().add(SelectStylist(_selectedStylist!));
     }
   }
 
@@ -72,7 +72,7 @@ class _BookingSchedulePageState extends State<BookingSchedulePage> {
                   onChanged: (value) {
                     setState(() => _selectedStylist = value);
                     if (value != null) {
-                      context.read<BookingBloc>().add(SelectStylistBooking(stylist: value));
+                      context.read<BookingBloc>().add(SelectStylist(value));
                     }
                   },
                 ),
@@ -138,7 +138,7 @@ class _BookingSchedulePageState extends State<BookingSchedulePage> {
                 selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
                 onDaySelected: (selectedDay, focusedDay) {
                   setState(() => _selectedDate = selectedDay);
-                  context.read<BookingBloc>().add(SelectDateBooking(date: selectedDay));
+                  context.read<BookingBloc>().add(SelectDate(selectedDay));
                 },
                 calendarStyle: const CalendarStyle(
                   todayDecoration: BoxDecoration(color: Color(0xFFF06292), shape: BoxShape.circle),
@@ -162,7 +162,7 @@ class _BookingSchedulePageState extends State<BookingSchedulePage> {
                 return GestureDetector(
                   onTap: () {
                     setState(() => _selectedTime = time);
-                    context.read<BookingBloc>().add(SelectTimeBooking(time: time));
+                    context.read<BookingBloc>().add(SelectTime(time));
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -189,7 +189,7 @@ class _BookingSchedulePageState extends State<BookingSchedulePage> {
             TextField(
               controller: _notesController,
               maxLines: 3,
-              onChanged: (value) => context.read<BookingBloc>().add(AddNotesBooking(notes: value)),
+              onChanged: (value) => context.read<BookingBloc>().add(AddNote(value)),
               decoration: InputDecoration(
                 hintText: 'Tulis catatan untuk stylist...',
                 filled: true,
@@ -220,7 +220,7 @@ class _BookingSchedulePageState extends State<BookingSchedulePage> {
                                 }
                               }
                             }
-                            context.read<BookingBloc>().add(SelectServicesBooking(services: services));
+                            context.read<BookingBloc>().add(SelectServices(services));
                             context.push('/checkout');
                           }
                         : null,

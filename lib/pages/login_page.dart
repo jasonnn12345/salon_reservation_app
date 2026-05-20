@@ -26,17 +26,28 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          current is AuthAuthenticated || current is AuthError,
       listener: (context, state) {
-        if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
-        }
         if (state is AuthAuthenticated) {
           context.go('/dashboard');
         }
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       },
+      buildWhen: (previous, current) =>
+          current is AuthLoading ||
+          current is AuthInitial ||
+          current is AuthError,
       builder: (context, state) {
+        final isLoading = state is AuthLoading;
+
         return Scaffold(
           backgroundColor: const Color(0xFFFCE4EC),
           body: SafeArea(
@@ -68,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                     TextField(
                       controller: _emailController,
                       decoration: InputDecoration(
-                        labelText: 'Email atau Username',
+                        labelText: 'Email',
                         prefixIcon: const Icon(Icons.email_outlined),
                         filled: true,
                         fillColor: Colors.white,
@@ -104,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: state is AuthLoading
+                        onPressed: isLoading
                             ? null
                             : () {
                                 context.read<AuthBloc>().add(LoginRequested(
@@ -119,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: state is AuthLoading
+                        child: isLoading
                             ? const SizedBox(
                                 height: 24,
                                 width: 24,
@@ -130,18 +141,25 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 16),
                     TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Fitur pendaftaran akan segera hadir!')),
-                        );
-                      },
-                        child: Text(
-                          'Belum punya akun? Daftar',
-                          style: GoogleFonts.poppins(
-                            color: const Color(0xFFE91E8C),
-                            fontWeight: FontWeight.w600,
-                          ),
+                      onPressed: () => context.push('/register'),
+                      child: RichText(
+                        text: TextSpan(
+                          style: GoogleFonts.poppins(fontSize: 14),
+                          children: [
+                            TextSpan(
+                              text: 'Belum punya akun? ',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                            const TextSpan(
+                              text: 'Daftar Sekarang',
+                              style: TextStyle(
+                                color: Color(0xFFE91E8C),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
                     ),
                   ],
                 ),

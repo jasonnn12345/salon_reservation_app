@@ -1,13 +1,4 @@
-// BookingBloc - State Flow:
-// BookingInitial -> BookingInProgress (user fills selections step by step)
-//   SelectStylist -> BookingInProgress (updates stylist)
-//   SelectServices -> BookingInProgress (updates services)
-//   SelectDate -> BookingInProgress (updates date)
-//   SelectTime -> BookingInProgress (updates time)
-//   AddNotes -> BookingInProgress (updates notes)
-// BookingInProgress -> BookingConfirmed (after ConfirmBooking)
-// BookingInitial -> HistoryLoaded (after LoadHistory)
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../models/stylist.dart';
@@ -15,193 +6,320 @@ import '../models/service.dart';
 import '../models/booking.dart';
 import '../data/dummy_data.dart';
 
-// Events
 abstract class BookingEvent extends Equatable {
   const BookingEvent();
   @override
   List<Object?> get props => [];
 }
 
-class SelectStylistBooking extends BookingEvent {
-  final Stylist stylist;
-  const SelectStylistBooking({required this.stylist});
-  @override
-  List<Object?> get props => [stylist];
-}
-
-class SelectServicesBooking extends BookingEvent {
-  final List<Service> services;
-  const SelectServicesBooking({required this.services});
-  @override
-  List<Object?> get props => [services];
-}
-
-class SelectDateBooking extends BookingEvent {
-  final DateTime date;
-  const SelectDateBooking({required this.date});
-  @override
-  List<Object?> get props => [date];
-}
-
-class SelectTimeBooking extends BookingEvent {
-  final String time;
-  const SelectTimeBooking({required this.time});
-  @override
-  List<Object?> get props => [time];
-}
-
-class AddNotesBooking extends BookingEvent {
-  final String notes;
-  const AddNotesBooking({required this.notes});
-  @override
-  List<Object?> get props => [notes];
-}
-
-class ConfirmBooking extends BookingEvent {
-  final String? voucherCode;
-  const ConfirmBooking({this.voucherCode});
-  @override
-  List<Object?> get props => [voucherCode];
-}
-
 class LoadHistory extends BookingEvent {
   const LoadHistory();
 }
 
-// States
-abstract class BookingState extends Equatable {
-  const BookingState();
+class SelectStylist extends BookingEvent {
+  final Stylist stylist;
+  const SelectStylist(this.stylist);
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [stylist];
 }
 
-class BookingInitial extends BookingState {
-  const BookingInitial();
-}
-
-class BookingInProgress extends BookingState {
-  final Stylist? stylist;
+class SelectServices extends BookingEvent {
   final List<Service> services;
-  final DateTime? date;
-  final String? time;
-  final String notes;
-  final int subtotal;
+  const SelectServices(this.services);
+  @override
+  List<Object?> get props => [services];
+}
 
-  const BookingInProgress({
-    this.stylist,
-    this.services = const [],
-    this.date,
-    this.time,
-    this.notes = '',
-    this.subtotal = 0,
+class SelectDate extends BookingEvent {
+  final DateTime date;
+  const SelectDate(this.date);
+  @override
+  List<Object?> get props => [date];
+}
+
+class SelectTime extends BookingEvent {
+  final String time;
+  const SelectTime(this.time);
+  @override
+  List<Object?> get props => [time];
+}
+
+class AddNote extends BookingEvent {
+  final String note;
+  const AddNote(this.note);
+  @override
+  List<Object?> get props => [note];
+}
+
+class ApplyVoucher extends BookingEvent {
+  final String code;
+  const ApplyVoucher(this.code);
+  @override
+  List<Object?> get props => [code];
+}
+
+class RemoveVoucher extends BookingEvent {
+  const RemoveVoucher();
+}
+
+class ConfirmBooking extends BookingEvent {
+  final String userId;
+  const ConfirmBooking({required this.userId});
+  @override
+  List<Object?> get props => [userId];
+}
+
+class ResetBookingForm extends BookingEvent {
+  const ResetBookingForm();
+}
+
+class ResetConfirmedFlag extends BookingEvent {
+  const ResetConfirmedFlag();
+}
+
+class BookingState extends Equatable {
+  final List<Booking> bookingHistory;
+  final Stylist? selectedStylist;
+  final List<Service> selectedServices;
+  final DateTime? selectedDate;
+  final String? selectedTime;
+  final String? notes;
+  final String? appliedVoucher;
+  final int discountAmount;
+  final bool isConfirmed;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const BookingState({
+    this.bookingHistory = const [],
+    this.selectedStylist,
+    this.selectedServices = const [],
+    this.selectedDate,
+    this.selectedTime,
+    this.notes,
+    this.appliedVoucher,
+    this.discountAmount = 0,
+    this.isConfirmed = false,
+    this.isLoading = false,
+    this.errorMessage,
   });
 
-  BookingInProgress copyWith({
-    Stylist? stylist,
-    List<Service>? services,
-    DateTime? date,
-    String? time,
-    String? notes,
-    int? subtotal,
+  int get subtotal => selectedServices.fold(0, (sum, s) => sum + s.price);
+  int get total => subtotal - discountAmount;
+
+  static const _undefined = Object();
+
+  BookingState copyWith({
+    List<Booking>? bookingHistory,
+    Object? selectedStylist = _undefined,
+    List<Service>? selectedServices,
+    Object? selectedDate = _undefined,
+    Object? selectedTime = _undefined,
+    Object? notes = _undefined,
+    Object? appliedVoucher = _undefined,
+    int? discountAmount,
+    bool? isConfirmed,
+    bool? isLoading,
+    Object? errorMessage = _undefined,
   }) {
-    return BookingInProgress(
-      stylist: stylist ?? this.stylist,
-      services: services ?? this.services,
-      date: date ?? this.date,
-      time: time ?? this.time,
-      notes: notes ?? this.notes,
-      subtotal: subtotal ?? this.subtotal,
+    return BookingState(
+      bookingHistory: bookingHistory ?? this.bookingHistory,
+      selectedStylist: selectedStylist == _undefined
+          ? this.selectedStylist
+          : selectedStylist as Stylist?,
+      selectedServices: selectedServices ?? this.selectedServices,
+      selectedDate: selectedDate == _undefined
+          ? this.selectedDate
+          : selectedDate as DateTime?,
+      selectedTime: selectedTime == _undefined
+          ? this.selectedTime
+          : selectedTime as String?,
+      notes: notes == _undefined
+          ? this.notes
+          : notes as String?,
+      appliedVoucher: appliedVoucher == _undefined
+          ? this.appliedVoucher
+          : appliedVoucher as String?,
+      discountAmount: discountAmount ?? this.discountAmount,
+      isConfirmed: isConfirmed ?? this.isConfirmed,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage == _undefined
+          ? this.errorMessage
+          : errorMessage as String?,
     );
   }
 
   @override
-  List<Object?> get props => [stylist, services, date, time, notes, subtotal];
-}
-
-class BookingConfirmed extends BookingState {
-  final Booking booking;
-  const BookingConfirmed({required this.booking});
-  @override
-  List<Object?> get props => [booking];
-}
-
-class HistoryLoaded extends BookingState {
-  final List<Booking> history;
-  const HistoryLoaded({required this.history});
-  @override
-  List<Object?> get props => [history];
+  List<Object?> get props => [
+        bookingHistory,
+        selectedStylist,
+        selectedServices,
+        selectedDate,
+        selectedTime,
+        notes,
+        appliedVoucher,
+        discountAmount,
+        isConfirmed,
+        isLoading,
+        errorMessage,
+      ];
 }
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
-  final List<Booking> _confirmedBookings = [];
-
-  BookingBloc() : super(BookingInitial()) {
-    on<SelectStylistBooking>(_onSelectStylist);
-    on<SelectServicesBooking>(_onSelectServices);
-    on<SelectDateBooking>(_onSelectDate);
-    on<SelectTimeBooking>(_onSelectTime);
-    on<AddNotesBooking>(_onAddNotes);
-    on<ConfirmBooking>(_onConfirmBooking);
+  BookingBloc() : super(const BookingState()) {
     on<LoadHistory>(_onLoadHistory);
+    on<SelectStylist>(_onSelectStylist);
+    on<SelectServices>(_onSelectServices);
+    on<SelectDate>(_onSelectDate);
+    on<SelectTime>(_onSelectTime);
+    on<AddNote>(_onAddNote);
+    on<ApplyVoucher>(_onApplyVoucher);
+    on<RemoveVoucher>(_onRemoveVoucher);
+    on<ConfirmBooking>(_onConfirmBooking);
+    on<ResetBookingForm>(_onResetBookingForm);
+    on<ResetConfirmedFlag>(_onResetConfirmedFlag);
   }
 
-  void _onSelectStylist(SelectStylistBooking event, Emitter<BookingState> emit) {
-    final current = state is BookingInProgress ? state as BookingInProgress : const BookingInProgress();
-    emit(current.copyWith(stylist: event.stylist));
-  }
-
-  void _onSelectServices(SelectServicesBooking event, Emitter<BookingState> emit) {
-    final current = state is BookingInProgress ? state as BookingInProgress : const BookingInProgress();
-    final total = event.services.fold<int>(0, (sum, s) => sum + s.price);
-    emit(current.copyWith(services: event.services, subtotal: total));
-  }
-
-  void _onSelectDate(SelectDateBooking event, Emitter<BookingState> emit) {
-    final current = state is BookingInProgress ? state as BookingInProgress : const BookingInProgress();
-    emit(current.copyWith(date: event.date));
-  }
-
-  void _onSelectTime(SelectTimeBooking event, Emitter<BookingState> emit) {
-    final current = state is BookingInProgress ? state as BookingInProgress : const BookingInProgress();
-    emit(current.copyWith(time: event.time));
-  }
-
-  void _onAddNotes(AddNotesBooking event, Emitter<BookingState> emit) {
-    final current = state is BookingInProgress ? state as BookingInProgress : const BookingInProgress();
-    emit(current.copyWith(notes: event.notes));
-  }
-
-  void _onConfirmBooking(ConfirmBooking event, Emitter<BookingState> emit) async {
-    final current = state as BookingInProgress;
-    emit(const BookingInitial()); // show loading
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    int totalPrice = current.subtotal;
-    if (event.voucherCode?.toUpperCase() == 'SALON10') {
-      totalPrice = (totalPrice * 0.9).round();
+  void _onLoadHistory(LoadHistory event, Emitter<BookingState> emit) {
+    if (state.bookingHistory.isEmpty) {
+      emit(state.copyWith(bookingHistory: DummyData.bookingHistory));
     }
-
-    final booking = Booking(
-      id: 'B${DateTime.now().millisecondsSinceEpoch}',
-      userId: DummyData.currentUser.id,
-      stylist: current.stylist!,
-      services: current.services,
-      date: current.date!,
-      time: current.time!,
-      notes: current.notes,
-      status: BookingStatus.confirmed,
-      totalPrice: totalPrice,
-    );
-
-    _confirmedBookings.add(booking);
-    emit(BookingConfirmed(booking: booking));
   }
 
-  void _onLoadHistory(LoadHistory event, Emitter<BookingState> emit) async {
-    emit(const BookingInitial());
-    await Future.delayed(const Duration(milliseconds: 300));
-    final history = [..._confirmedBookings, ...DummyData.bookingHistory];
-    emit(HistoryLoaded(history: history));
+  void _onSelectStylist(SelectStylist event, Emitter<BookingState> emit) {
+    emit(state.copyWith(selectedStylist: event.stylist));
+  }
+
+  void _onSelectServices(SelectServices event, Emitter<BookingState> emit) {
+    emit(state.copyWith(selectedServices: event.services));
+  }
+
+  void _onSelectDate(SelectDate event, Emitter<BookingState> emit) {
+    emit(state.copyWith(selectedDate: event.date));
+  }
+
+  void _onSelectTime(SelectTime event, Emitter<BookingState> emit) {
+    emit(state.copyWith(selectedTime: event.time));
+  }
+
+  void _onAddNote(AddNote event, Emitter<BookingState> emit) {
+    emit(state.copyWith(notes: event.note));
+  }
+
+  void _onApplyVoucher(ApplyVoucher event, Emitter<BookingState> emit) {
+    final code = event.code.trim().toUpperCase();
+    if (code == 'SALON10') {
+      final discount = (state.subtotal * 0.1).round();
+      emit(state.copyWith(
+        appliedVoucher: code,
+        discountAmount: discount,
+        errorMessage: null,
+      ));
+    } else {
+      emit(state.copyWith(
+        appliedVoucher: null,
+        discountAmount: 0,
+        errorMessage: 'Kode voucher tidak valid',
+      ));
+    }
+  }
+
+  void _onRemoveVoucher(RemoveVoucher event, Emitter<BookingState> emit) {
+    emit(state.copyWith(
+      appliedVoucher: null,
+      discountAmount: 0,
+      errorMessage: null,
+    ));
+  }
+
+  Future<void> _onConfirmBooking(
+    ConfirmBooking event,
+    Emitter<BookingState> emit,
+  ) async {
+    debugPrint('=== _onConfirmBooking START ===');
+
+    try {
+      emit(state.copyWith(isLoading: true, isConfirmed: false));
+
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (state.selectedStylist == null) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Stylist belum dipilih',
+        ));
+        return;
+      }
+      if (state.selectedDate == null) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Tanggal belum dipilih',
+        ));
+        return;
+      }
+      if (state.selectedTime == null) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Jam belum dipilih',
+        ));
+        return;
+      }
+      if (state.selectedServices.isEmpty) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Belum ada layanan dipilih',
+        ));
+        return;
+      }
+
+      final newBooking = Booking(
+        id: 'BK${DateTime.now().millisecondsSinceEpoch}',
+        userId: event.userId,
+        stylist: state.selectedStylist!,
+        services: List.from(state.selectedServices),
+        date: state.selectedDate!,
+        time: state.selectedTime!,
+        notes: state.notes,
+        status: BookingStatus.menunggu,
+        totalPrice: state.total,
+      );
+
+      debugPrint('=== New booking created: ${newBooking.id} ===');
+
+      final updatedHistory = [newBooking, ...state.bookingHistory];
+
+      emit(state.copyWith(
+        isLoading: false,
+        isConfirmed: true,
+        bookingHistory: updatedHistory,
+        selectedStylist: null,
+        selectedDate: null,
+        selectedTime: null,
+        notes: null,
+        discountAmount: 0,
+        appliedVoucher: null,
+      ));
+
+      debugPrint('=== _onConfirmBooking DONE, isConfirmed=true ===');
+    } catch (e, stackTrace) {
+      debugPrint('=== ConfirmBooking ERROR: $e ===');
+      debugPrint(stackTrace.toString());
+      emit(state.copyWith(
+        isLoading: false,
+        isConfirmed: false,
+        errorMessage: 'Gagal konfirmasi booking: $e',
+      ));
+    }
+  }
+
+  void _onResetBookingForm(ResetBookingForm event, Emitter<BookingState> emit) {
+    emit(state.copyWith(
+      isConfirmed: false,
+      errorMessage: null,
+    ));
+  }
+
+  void _onResetConfirmedFlag(ResetConfirmedFlag event, Emitter<BookingState> emit) {
+    emit(state.copyWith(isConfirmed: false));
   }
 }

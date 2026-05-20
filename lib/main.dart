@@ -26,25 +26,30 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => ServiceBloc()..add(LoadServices())),
         BlocProvider(create: (_) => BookingBloc()..add(LoadHistory())),
       ],
-      child: MaterialApp.router(
-        title: 'GlowSalon',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFE91E8C)),
-          textTheme: GoogleFonts.poppinsTextTheme(),
-          scaffoldBackgroundColor: const Color(0xFFFCE4EC),
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Builder(
+        builder: (context) {
+          final authBloc = context.read<AuthBloc>();
+          return MaterialApp.router(
+            title: 'GlowSalon',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFE91E8C)),
+              textTheme: GoogleFonts.poppinsTextTheme(),
+              scaffoldBackgroundColor: const Color(0xFFFCE4EC),
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 0,
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
             ),
-          ),
-        ),
-        routerConfig: appRouter,
+            routerConfig: createAppRouter(authBloc),
+          );
+        },
       ),
     );
   }
